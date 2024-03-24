@@ -1,0 +1,24 @@
+[package]
+name = "Matrix_Calculator" # 你的包名
+version = "0.1.0" # 项目版本
+authors = ["Your Name <you@example.com>"] # 作者信息
+edition = "2021" # Rust编译器版本，可以是2015、2018或2021
+
+# 当你的包被发布到crates.io时，下面的字段是必需的
+description = "A description of your package" # 包描述
+license = "MIT OR Apache-2.0" # 许可证
+
+# 你可以指定这个包是二进制包还是库
+# 通过取消下面哪一行的注释来选择
+#[lib]
+#path = "src/lib.rs"
+
+[[bin]]
+name = "Matrix_Calculator"
+path = "src/main.rs"
+
+[dependencies]
+rand = "0.8.4"
+rand_core = "0.6.3"
+num-traits = "0.2"
+num-bigfloat = "1.7.1"
