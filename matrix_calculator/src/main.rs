@@ -42,7 +42,7 @@ impl<T> Matrix<T> where T:
         print!("┌");
         print!("{}", " ".repeat((width+1) * matrix.get_cols()));
         print!("┐");
-        println!("");
+        println!();
         for row in 0..matrix.get_rows() {
             print!("│");
             for col in 0..matrix.get_cols() {
@@ -55,7 +55,7 @@ impl<T> Matrix<T> where T:
         print!("└");
         print!("{}", " ".repeat((width+1) * matrix.get_cols()));
         print!("┘");
-        println!("");
+        println!();
     }
 
     fn write_to_file(matrix: &Matrix<T>, file_name: &String, word_size:usize, decimal_space:usize) -> std::io::Result<()> {
