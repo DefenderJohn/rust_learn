@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 use std::ptr::read;
 use std::str::FromStr;
@@ -144,6 +145,12 @@ impl Complex {
         }
 
         return result;
+    }
+}
+
+impl fmt::Display for Complex {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} + {}i", self.real, self.imaginary)
     }
 }
 
