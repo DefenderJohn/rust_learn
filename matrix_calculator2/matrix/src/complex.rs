@@ -6,8 +6,8 @@ use bigdecimal::BigDecimal;
 use num_traits::{FromPrimitive, Signed, ToPrimitive};
 
 pub struct Complex {
-    real:BigDecimal,
-    imaginary:BigDecimal,
+    pub(crate) real:BigDecimal,
+    pub(crate) imaginary:BigDecimal,
 }
 
 impl Complex {
@@ -25,10 +25,25 @@ impl Complex {
         }
     }
 
+    pub fn from_big_decimal(_real:&BigDecimal, _imaginary:&BigDecimal) -> Complex{
+        Complex{
+            real: _real.clone(),
+            imaginary: _imaginary.clone()
+        }
+    }
+
     pub fn conjugate(target:&Complex) -> Complex{
         let mut result:Complex = Complex::new();
         result.real = target.real.clone();
         result.imaginary = -&target.imaginary;
+        return result;
+    }
+    
+    pub fn complex_pow(target:&Complex, pow:i32) -> Complex{
+        let mut result = Complex::init(1.0, 0.0);
+        for _ in 0..pow {
+            result = &result * target;
+        }
         return result;
     }
 
@@ -36,6 +51,7 @@ impl Complex {
         let (mut r, mut theta) = Self::to_polar(target);
         r = Self::fast_pow(&r, pow as u64);
         theta = theta * pow;
+        print!("{}\n",Self::from_big_decimal(&r,&theta));
         return Self::from_polar(&r, &theta);
     }
 
@@ -47,67 +63,63 @@ impl Complex {
 
     pub fn from_polar(r:&BigDecimal, theta:&BigDecimal) -> Complex{
         let mut result:Complex = Complex::new();
-        result.real = r * &Self::calc_cos(theta);
-        result.imaginary = r * &Self::calc_sin(theta);
+        result.real = r * &Self::calc_cos(theta, 10);
+        result.imaginary = r * &Self::calc_sin(theta, 10);
+        print!("{}\n",&result);
         return result;
     }
 
-    fn calc_cos(angle:&BigDecimal) -> BigDecimal{
+    pub fn calc_cos(angle: &BigDecimal, terms:u64) -> BigDecimal {
         let normalized_angle = Self::normalize_angle(&angle);
-        let terms = 40;
         let mut result = BigDecimal::from(0);
+        let mut factorial = BigDecimal::from(1);
         for term in 0..terms {
             let n = 2 * term;
-            if term % 2 == 0 {
-                let mut factorial:i128 = 1;
-                for fact in 1..(n+1) as i128 {
-                    factorial *= fact;
-                }
-                result -= Self::fast_pow(&angle, n) / factorial;
-            }else {
-                let mut factorial:i128 = 1;
-                for fact in 1..(n+1) as i128 {
-                    factorial *= fact;
-                }
-                result += Self::fast_pow(&angle, n) / factorial;
+            if term != 0 {
+                // 对于n > 0，计算n! = n * (n-1)!
+                factorial *= BigDecimal::from(n * (n - 1));
+            }
+            if term % 2 == 1 {
+                result -= Self::fast_pow(&normalized_angle, n) / &factorial;
+            } else {
+                result += Self::fast_pow(&normalized_angle, n) / &factorial;
             }
         }
         return result;
     }
 
-    fn calc_sin(angle:&BigDecimal) -> BigDecimal{
+    pub fn calc_sin(angle: &BigDecimal, terms:u64) -> BigDecimal {
         let normalized_angle = Self::normalize_angle(&angle);
-        let terms = 40;
+        let terms = 30;
         let mut result = BigDecimal::from(0);
-        for term in 0..terms+1 {
-            let n = 2 * term - 1;
-            if term % 2 == 0 {
-                let mut factorial:i128 = 1;
-                for fact in 1..(n+1) as i128 {
-                    factorial *= fact;
-                }
-                result -= Self::fast_pow(&angle, n) / factorial;
-            }else {
-                let mut factorial:i128 = 1;
-                for fact in 1..(n+1) as i128 {
-                    factorial *= fact;
-                }
-                result += Self::fast_pow(&angle, n) / factorial;
+        let mut factorial = BigDecimal::from(1);
+        for term in 0..terms {
+            let n = 2 * term + 1;
+            if term != 0 {
+                // 更新阶乘值以包含下一个奇数项的阶乘
+                factorial *= BigDecimal::from((2 * term) * (2 * term + 1));
+            }
+            if term % 2 == 1 {
+                result -= Self::fast_pow(&normalized_angle, n) / &factorial;
+            } else {
+                result += Self::fast_pow(&normalized_angle, n) / &factorial;
             }
         }
         return result;
     }
+
 
     fn normalize_angle(angle:&BigDecimal) -> BigDecimal{
         let PI = BigDecimal::from_str("3.141592653589793238462643383279").unwrap();
-        let ratio:i64 = (&angle / (2 * &PI)).to_i64();
-        let normalized_angle:BigDecimal = &angle - BigDecimal::from_i64(ratio).unwrap() * (2 * &PI);
+        let ratio = (angle / &(2 * &PI)).to_i64().unwrap();
+        let normalized_angle:BigDecimal = angle - BigDecimal::from_i64(ratio).unwrap() * (2 * &PI);
         return normalized_angle;
     }
 
-    fn calc_arctan(num:&BigDecimal) -> BigDecimal{
+    fn calc_arctan(mut num:&BigDecimal) -> BigDecimal{
+        let num = num.round(40);
         let PI = BigDecimal::from_str("3.141592653589793238462643383279").unwrap();
-        let terms = 10000;
+        let terms = 1000;
         let mut result = BigDecimal::from(0);
         if BigDecimal::abs(&num) < BigDecimal::from(1) {
             for term in 1..terms {
@@ -117,6 +129,7 @@ impl Complex {
                 }else {
                     result += Self::fast_pow(&num, n) / n;
                 }
+                result = result.round(50);
             }
         }else if BigDecimal::eq(&num, &BigDecimal::from(1)) {
             result = &PI / 4;
@@ -125,9 +138,9 @@ impl Complex {
             result = -&PI / 4;
             return result;
         }else if BigDecimal::is_negative(&num) {
-            result = -&PI / 2 - Self::calc_arctan(1 / num);
+            result = -&PI / 2 - Self::calc_arctan(&(&BigDecimal::from(1) / num));
         }else if BigDecimal::is_positive(&num) {
-            result = &PI / 2 - Self::calc_arctan(1 / num);
+            result = &PI / 2 - Self::calc_arctan(&(&BigDecimal::from(1) / num));
         }
         return result;
     }
@@ -146,11 +159,23 @@ impl Complex {
 
         return result;
     }
+    
+    pub fn exp(target:&Complex) -> Complex{
+        let mut result = Complex::new();
+        let real_exp = target.real.exp();
+        result.real = real_exp.clone() * Self::calc_cos(&target.imaginary, 5);
+        result.imaginary = real_exp.clone() * Self::calc_sin(&target.imaginary, 5);
+        return result;
+    }
 }
 
 impl fmt::Display for Complex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} + {}i", self.real, self.imaginary)
+        let rounded_real = self.real.with_scale(10);
+        let real: f64 = rounded_real.to_f64().unwrap();
+        let rounded_imaginary = self.imaginary.with_scale(10);
+        let imaginary: f64 = rounded_imaginary.to_f64().unwrap();
+        write!(f, "{} + {}i", real, imaginary)
     }
 }
 
