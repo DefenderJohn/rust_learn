@@ -5,6 +5,7 @@ use std::ops::{Add, Sub, Mul, Div};
 #[cfg(test)]
 mod tests {
     use crate::complex::Complex;
+    use crate::equation::EquationWithDegrees;
     use super::*;
 
     #[test]
@@ -91,6 +92,28 @@ mod tests {
         let complex_back = Complex::from_polar(&r, &theta);
         assert!(complex_back.real - BigDecimal::from_f64(1.0).unwrap() < BigDecimal::from_f64(0.0001).unwrap());
         assert!(complex_back.imaginary - BigDecimal::from_f64(1.0).unwrap() < BigDecimal::from_f64(0.0001).unwrap());
+    }
+
+    #[test]
+    fn test_quadratic_polynomial() {
+        // 创建一个表示 x^2 - 1 = 0 的多项式
+        let parameters = vec![
+            Complex::from_big_decimal(&BigDecimal::from(-1), &BigDecimal::from(0)), // 常数项 -1
+            Complex::from_big_decimal(&BigDecimal::from(0), &BigDecimal::from(0)),  // x 的系数 0
+            Complex::from_big_decimal(&BigDecimal::from(1), &BigDecimal::from(0)),  // x^2 的系数 1
+        ];
+        let equation = EquationWithDegrees::new(parameters);
+        // 设置一个合理的误差阈值
+        let threshold = BigDecimal::from_str("0.001").unwrap();
+        let roots = equation.solve(&threshold);
+
+        // 期望的根是 1 和 -1
+        let expected_root1 = Complex::from_big_decimal(&BigDecimal::from(1), &BigDecimal::from(0));
+        let expected_root2 = Complex::from_big_decimal(&BigDecimal::from(-1), &BigDecimal::from(0));
+
+        // 验证解是否在误差范围内
+        assert!(roots.iter().any(|root| (root - &expected_root1).abs() < threshold));
+        assert!(roots.iter().any(|root| (root - &expected_root2).abs() < threshold));
     }
 }
 

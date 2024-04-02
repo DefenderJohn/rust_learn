@@ -5,6 +5,7 @@ use std::str::FromStr;
 use bigdecimal::BigDecimal;
 use num_traits::{FromPrimitive, Signed, ToPrimitive};
 
+#[derive(Clone)]
 pub struct Complex {
     pub(crate) real:BigDecimal,
     pub(crate) imaginary:BigDecimal,
@@ -166,6 +167,10 @@ impl Complex {
         result.real = real_exp.clone() * Self::calc_cos(&target.imaginary, 5);
         result.imaginary = real_exp.clone() * Self::calc_sin(&target.imaginary, 5);
         return result;
+    }
+    
+    pub fn abs(&self) -> BigDecimal{
+        return BigDecimal::sqrt(&(&self.real * &self.real + &self.imaginary * &self.imaginary)).unwrap()  
     }
 }
 
