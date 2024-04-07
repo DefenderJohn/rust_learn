@@ -15,7 +15,7 @@ impl EquationWithDegrees{
     }
 
     pub fn solve(&self, threshold:&BigDecimal) -> Vec<Complex>{
-        let mut roots = Self::initial_roots(self.parameters.len());
+        let mut roots = Self::initial_roots(self.parameters.len() - 1);
         let mut temp_roots = Vec::new();
         loop {
             let mut errors:Vec<BigDecimal> = Vec::new();
@@ -37,7 +37,7 @@ impl EquationWithDegrees{
             temp_roots = Vec::new();
             let mut under_threshold = true;
             print!("Errors:");
-            for error_index in 0..errors.len()-1 {
+            for error_index in 0..errors.len() {
                 let error = errors.get(error_index).unwrap();
                 let print_error = error.clone();
                 print_error.round(4);
@@ -59,8 +59,8 @@ impl EquationWithDegrees{
         let PI = BigDecimal::from_str("3.141592653589793238462643383279").unwrap();
         let mut result:Vec<Complex> = Vec::new();
         for i in 1..=size {
-            let real =  Complex::calc_cos(&((2 * i as i64 * &PI) / size as i64), 3).round(10);
-            let imaginary = Complex::calc_sin(&((2 * i as i64 * &PI) / size as i64), 3).round(10);
+            let real =  Complex::calc_cos(&((2 * i as i64 * &PI) / size as i64), 4).round(10);
+            let imaginary = Complex::calc_sin(&((2 * i as i64 * &PI) / size as i64), 4).round(10);
             let comp = Complex::from_big_decimal(&real, &imaginary);
             result.push(comp);
         }
@@ -68,8 +68,8 @@ impl EquationWithDegrees{
     }
 
     fn calc_eq(eq:&EquationWithDegrees, x:&Complex) -> Complex{
-        let mut result = Complex::init(0.0, 0.0);
-        for pow in 0 .. eq.parameters.len() as i32 {
+        let mut result = Complex::from_big_decimal(&eq.parameters.get(0).unwrap().real, &eq.parameters.get(0).unwrap().imaginary);
+        for pow in 1 .. eq.parameters.len() as i32 {
             let parameter = eq.parameters.get(pow as usize).unwrap();
             result = &result + &(parameter * &Complex::complex_pow(&x, pow));
         }
